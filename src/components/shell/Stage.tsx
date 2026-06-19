@@ -10,6 +10,7 @@ import type { Perspective } from '@/context/demo-types'
 import { Phone } from './Phone'
 import { Wordmark } from './Wordmark'
 import { Avatar } from '@/components/ui/Avatar'
+import { captions } from '@/data/demoData'
 
 function useStageScale() {
   const [scale, setScale] = useState(1)
@@ -69,10 +70,18 @@ export function Stage() {
           className="relative flex items-start justify-center gap-10"
           style={{ transform: `scale(${scale})`, transformOrigin: 'top center' }}
         >
-          <Phone perspective="maya" framed primary={focus} />
-          <Phone perspective="leo" framed recede={focus} />
+          <Phone perspective="maya" framed primary={focus} showBigAvatar={state.currentScreen === 'today'} />
+          <Phone perspective="leo" framed recede={focus} showBigAvatar={state.currentScreen === 'today'} />
         </div>
-        <p className="relative text-sm font-medium text-ink/35">Tap a phone · → to advance · R to reset</p>
+        <div className="relative flex flex-col items-center gap-1">
+          <p
+            key={state.currentScreen}
+            className="animate-fade-rise font-display text-[15px] italic text-ink-muted"
+          >
+            {captions[state.currentScreen]}
+          </p>
+          <p className="text-sm font-medium text-ink/35">Tap a phone · → to advance · R to reset</p>
+        </div>
       </div>
 
       {/* MOBILE — just the app, full-bleed: instantly shareable + playable */}

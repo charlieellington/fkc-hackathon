@@ -1,6 +1,7 @@
-// Human-first note: one phone on the stage — a labelled device frame running the flow from a
-// single person's perspective. `primary`/`recede` implement the Question "Focus Mode" so the
-// emotional reveal has one focal point even with two phones on screen.
+// Human-first note: one phone on the stage — a labelled device frame running the flow from a single
+// person's perspective. `primary`/`recede` implement the Question "Focus Mode". On the Today screen an
+// OVERSIZED team photo sits behind the phone (the comedic reveal) and peeks out to the side; it fades
+// out once the demo advances so it never competes with the emotional beats.
 import { cn } from '@/lib/utils'
 import type { Perspective } from '@/context/demo-types'
 import { DeviceFrame } from './DeviceFrame'
@@ -13,11 +14,13 @@ export function Phone({
   framed = true,
   primary = false,
   recede = false,
+  showBigAvatar = false,
 }: {
   perspective: Perspective
   framed?: boolean
   primary?: boolean
   recede?: boolean
+  showBigAvatar?: boolean
 }) {
   if (!framed) {
     return (
@@ -37,14 +40,28 @@ export function Phone({
       </div>
       <div
         className={cn(
-          'origin-center transition-all duration-500 ease-out',
+          'relative origin-center transition-all duration-500 ease-out',
           primary && 'z-10 scale-[1.04]',
           recede && 'scale-[0.99] opacity-65',
         )}
       >
-        <DeviceFrame framed>
-          <StageView perspective={perspective} />
-        </DeviceFrame>
+        {/* Oversized team photo behind the phone — peeks out to the side (Maya left, Leo right).
+            Only on Today; fades out as the demo advances. */}
+        <img
+          src={couple[perspective].largePhoto}
+          alt=""
+          aria-hidden
+          className={cn(
+            'pointer-events-none absolute left-1/2 top-1/2 z-0 h-[1000px] w-[740px] max-w-none -translate-y-1/2 rounded-[36px] object-cover shadow-2xl shadow-black/70 ring-1 ring-white/10 transition-opacity duration-700 ease-out',
+            perspective === 'maya' ? '-translate-x-[72%]' : '-translate-x-[28%]',
+            showBigAvatar ? 'opacity-90' : 'opacity-0',
+          )}
+        />
+        <div className="relative z-10">
+          <DeviceFrame framed>
+            <StageView perspective={perspective} />
+          </DeviceFrame>
+        </div>
       </div>
     </div>
   )

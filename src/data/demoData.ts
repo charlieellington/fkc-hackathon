@@ -5,14 +5,18 @@
 
 import mayaPhoto from '@/assets/avatars/maya.jpg'
 import leoPhoto from '@/assets/avatars/leo.jpg'
+// Larger versions for the oversized "funny photo" reveal behind the phones on the Today screen.
+import mayaLarge from '@/assets/avatars/maya-large.jpg'
+import leoLarge from '@/assets/avatars/leo-large.jpg'
+import type { Screen } from '@/context/demo-types'
 
 export type PersonKey = 'maya' | 'leo'
 
 // The two sides of the relationship. `accent` is each person's own love-language colour
 // (used for their avatar ring / perspective). Maya = Quality Time (teal), Leo = Physical Touch (amber).
 export const couple = {
-  maya: { key: 'maya', name: 'Maya', initial: 'M', photo: mayaPhoto, language: 'Quality Time', accent: 'teal' },
-  leo: { key: 'leo', name: 'Leo', initial: 'L', photo: leoPhoto, language: 'Physical Touch', accent: 'amber' },
+  maya: { key: 'maya', name: 'Maya', initial: 'M', photo: mayaPhoto, largePhoto: mayaLarge, language: 'Quality Time', accent: 'teal' },
+  leo: { key: 'leo', name: 'Leo', initial: 'L', photo: leoPhoto, largePhoto: leoLarge, language: 'Physical Touch', accent: 'amber' },
 } as const
 
 // The hero metric. Only the Pulse moves this (82 → 84). `afterPulse` is the post-check-in state.
@@ -100,6 +104,17 @@ export const anniversary = {
 } as const
 
 export const closing = 'Tiny daily reps keep the spark from becoming an emergency.'
+
+// One short line per beat, shown only on the desktop projector stage (never on mobile) —
+// tells the audience what they're seeing / can do on each slide. Tiny, peripheral chrome.
+export const captions: Record<Screen, string> = {
+  today: 'A daily relationship score — tap Pulse to check in',
+  spark: 'A nudge for each partner, in their love language',
+  afterDark: 'A playful after-dark forecast — teased behind Nami+',
+  question: "Both answer one question, then reveal each other's",
+  anniversary: 'Turn the moment into a planned micro-date',
+  close: 'Tiny daily reps keep the spark alive',
+}
 
 // Kept for Q&A only — NOT rendered in the live run.
 export const badges = {

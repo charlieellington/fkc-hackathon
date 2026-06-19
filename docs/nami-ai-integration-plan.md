@@ -12,18 +12,51 @@
 
 ## 0. TL;DR — what we're building
 
-Three real-Claude features, each behind a hard **stage-safety net** (seed shows instantly → live text
-swaps in only if Claude answers within ~2.5s → otherwise the seed stays, forever, silently):
+Three real-Claude features, each behind a hard **stage-safety net**, and gated by **one build, two
+modes** (§0.5): the scripted presentation run touches the network **zero** times; the real Claude path
+fires **only when a person interacts** (edits the prefilled answer, taps "Make it cuter", or uses Ask
+Nami) — and even then, a ≤2.5s timeout falls back to the seed.
 
-| # | Feature | Surface | Trigger | Real-AI payoff |
+| # | Feature | Surface | Real-AI fires when… | Real-AI payoff |
 |---|---------|---------|---------|----------------|
-| 🥇 1 | **Anniversary micro-date** from the revealed answer | `AnniversaryPlanCard` (beat 5) | prefetch on Question reveal; **"Make it cuter" = a real fresh call** | the headline "emotion → specific action," and a *new* plan every tap |
-| 🥈 2 | **Spark translator** — the two contrasting nudges | `SparkCard` (beat 2) | prefetch on app load | swap love languages → the two nudges genuinely diverge |
-| 🥉 3 | **"Ask Nami" coach** — free-text → a warm tip | **new** root-level `<AskNami/>` overlay (Q&A only) | user types anything | the literal "throw anything at it" box; the Nami+ Coach tease |
+| 🥇 1 | **Anniversary micro-date** from the answer | `AnniversaryPlanCard` (beat 5) | the answer was **edited** (→ plan from the new words), or **"Make it cuter"** is tapped | "emotion → specific action," live; a *new* plan every tap |
+| 🥈 2 | **Spark translator** — the two contrasting nudges | `SparkCard` (beat 2) | the optional **"✨ regenerate"** control is tapped | swap love languages → the two nudges genuinely diverge |
+| 🥉 3 | **"Ask Nami" coach** — free-text → a warm tip | **new** root-level `<AskNami/>` overlay (Q&A only) | **always** (it's the dedicated play surface) | the literal "throw anything at it" box; the Nami+ Coach tease |
 
 Three serverless functions (`/api/plan`, `/api/spark`, `/api/coach`) hold the key and call Claude;
 the SPA `fetch()`es them on the same origin (no CORS). The Question reveal text stays **100% verbatim
-seed** — AI *consumes* Leo's/Maya's answer, never rewrites it.
+seed** — AI *consumes* the answer, never rewrites the partner's revealed words.
+
+---
+
+## 0.5 Two modes from one build — **presentation** vs **interactive**
+
+There is **no toggle and no second deploy.** The mode is decided per-field by whether anyone has *touched*
+the prefilled input:
+
+- **Presentation mode (the default / the presenter's path).** Tap straight through without editing.
+  Every prefilled value is untouched, so **no API call is ever made** — every beat renders its seed copy,
+  instantly, identically, fully offline. This is what runs on the projector: rehearsed, deterministic,
+  un-break-able, and immune to a live call swapping a memorized line mid-sentence.
+- **Interactive mode (the phone/play path).** The moment someone **edits** a prefilled field (or taps an
+  explicitly interactive control like "Make it cuter" / Ask Nami), that field switches to the **real
+  Claude path** — generated live from what they typed, with the ≤2.5s shimmer + seed fallback.
+
+**The gate is a per-field "dirty" check:** `value === prefill ? useSeed() : callClaude()`. Nothing else
+distinguishes the two modes.
+
+This *replaces* the brief's "always prefetch on screen-entry" model. The brief prefetched live text even
+for the scripted copy (to look like it's "really thinking"); we get that credibility more convincingly
+from the **editable** surfaces — a judge edits the box and watches it adapt — while the scripted run gains
+the stronger guarantee of **zero network dependence**. (Net effect: strictly safer on stage, and more
+impressive in the hand.)
+
+Reset (refresh, long-press the wordmark, or `?reset`) restores every prefill → i.e. **returns the app to
+clean presentation mode** between rehearsals or after a curious judge has poked it.
+
+*Robustness option (decision §8.5):* on the **desktop framed stage** keep the answer box non-editable
+(presenter literally cannot dirty it → guaranteed presentation), and enable editing only on the **mobile
+full-bleed** build (the share-to-play target). Edit-gating still applies on mobile.
 
 ---
 
@@ -80,23 +113,28 @@ for the demo — it adds setup for benefits the demo doesn't need.
 
 The codebase already has a clean seam, and the plan leans into it instead of fighting `as const`:
 
-- **Seeds stay in `demoData.ts`** (single source of truth, untouched, still the offline fallback).
+- **Seeds stay in `demoData.ts`** (single source of truth, untouched, = the presentation copy *and* the
+  offline fallback).
 - **Live text is overlaid in context state**, never by mutating the frozen seed objects. Every text
   screen already calls both `useDemo()` *and* imports its seed slice, so each render becomes:
-  `const body = state.ai.<feature>[perspective] ?? <seed>` — seed first, live wins if present.
-- **Fetches fire once, in `DemoProvider`** (not in leaf components). Because the desktop stage mounts
-  **two** `<Phone>`s sharing one provider, firing in a component would double-call. The provider owns
-  the calls and stores results keyed by perspective `{ maya, leo }`; both phones read their slice.
-- **Perspective is a parameter, not state** (`roles(p)` selector). Spark and Plan are therefore
-  generated **per perspective** (Maya's plan from Leo's answer; Leo's from Maya's), matching the
-  two-phone model.
-- **The stage-safety net is one tiny client helper** (`aiSwap`, §4.3): AbortController + 2.5s timeout,
+  `const body = state.ai.<feature>[perspective] ?? <seed>` — seed first, live wins **only if a real call
+  was triggered and returned**.
+- **No automatic/prefetch calls — calls are interaction-gated** (§0.5). The scripted run never triggers
+  one. When an interaction *does* trigger a call, it's owned by **`DemoProvider`** (not the leaf), so the
+  two desktop `<Phone>`s sharing one provider can't double-fire; results are stored keyed by perspective
+  `{ maya, leo }` and both phones read their slice. (Ask Nami is the exception: it's a self-contained
+  overlay with its own local state and its own call.)
+- **Perspective is a parameter, not state** (`roles(p)` selector). Plan/Spark live values are therefore
+  stored **per perspective**, matching the two-phone model.
+- **The stage-safety net is one tiny client helper** (`aiSwap`, §5.2): AbortController + 2.5s timeout,
   returns `null` on any timeout/error so the caller keeps the seed. No spinner-of-death possible.
-- **The existing `.shimmer-sweep` class** (700ms, already ≤800ms, used by `LockedAnswer`) is reused
-  for the only user-initiated swap ("Make it cuter"). Prefetched swaps are silent (seed already shown).
+- **The existing `.shimmer-sweep` class** (700ms, already ≤800ms, used by `LockedAnswer`) covers every
+  user-initiated swap (edited-answer plan, "Make it cuter", Spark regenerate, Ask Nami). Because these
+  only happen in interactive mode, a brief "thinking" shimmer there is *desirable*, not a risk.
 
 This is additive: `SCREEN_ORDER`, `advance`, the beat timers, the Question reveal, and "only the Pulse
-moves the score" are all **unchanged**.
+moves the score" are all **unchanged**. The only behavioural change to the scripted path is that the
+answer box becomes *editable* — but if untouched it behaves exactly as today (seed, no call).
 
 ---
 
@@ -224,13 +262,19 @@ export async function POST(request: Request): Promise<Response> {
 ### 5.1 State additions (`src/context/demo-types.ts`)
 ```ts
 export interface AiState {
-  spark: { maya: string | null; leo: string | null }       // live nudge bodies
-  plan:  { maya: string | null; leo: string | null }        // live anniversary plans
-  planRegenerating: { maya: boolean; leo: boolean }         // "make it cuter" in-flight → shimmer
+  spark: { maya: string | null; leo: string | null }       // live nudge bodies (null until regenerated)
+  sparkBusy: { maya: boolean; leo: boolean }                // "✨ regenerate" in-flight → shimmer
+  plan:  { maya: string | null; leo: string | null }        // live anniversary plans (null until edited/cuter)
+  planBusy: { maya: boolean; leo: boolean }                 // edited-answer / "make it cuter" in-flight → shimmer
 }
 // add to DemoState:  ai: AiState
 ```
-`initialState.ai` = all `null` / `false`. `reset()` must restore it (and abort any in-flight fetch).
+`initialState.ai` = all `null` / `false` — i.e. **presentation mode** is the initial state (nothing live
+yet → everything renders its seed). `reset()` restores it (and aborts any in-flight fetch), which is what
+makes reset = "back to clean presentation mode."
+
+The **answer-dirty** signal lives as local state in `QuestionScreen` (the editable textarea); it's passed
+*into* `sendQuestion(text, dirty)` rather than stored globally. Ask Nami keeps all its state local.
 
 ### 5.2 Provider plumbing (`src/context/DemoProvider.tsx`)
 - **`src/lib/aiSwap.ts`** (new) — the safety net:
@@ -249,28 +293,46 @@ export async function aiSwap<T>(path: string, body: unknown, timeoutMs = 2500): 
   } catch { return null } finally { clearTimeout(t) }
 }
 ```
-- **Prefetch Spark on mount:** `useEffect(() => { aiSwap('/api/spark', {...}).then(r => { if (r?.mayasNudge) setState(s => ({...s, ai:{...s.ai, spark:{maya:r.mayasNudge, leo:r.leosNudge}}})) }) }, [])`.
-- **Prefetch Plans inside `sendQuestion`:** when the reveal `setState` fires (the existing 700ms point),
-  kick off **two** `aiSwap('/api/plan', { answer: <partner's hero>, variation:'default', ... })` calls —
-  Leo's hero → `ai.plan.maya`, Maya's hero → `ai.plan.leo`. The ~1.9s reveal-hold + screen-switch covers
-  the latency, so the Anniversary card paints live on arrival (or seed if not back yet).
-- **New action `regeneratePlan(perspective)`** (NOT a one-shot `fired` guard — it's repeatable; gate on
-  the `planRegenerating[p]` flag): set flag → `aiSwap('/api/plan', { variation:'cuter', ... })` → on a
-  non-null result set `ai.plan[p]`, else keep current → clear flag. Expose on `DemoApi`.
+- **No mount/reveal prefetch.** (This is the deletion vs the brief.) Nothing fires automatically.
+- **`sendQuestion(text, dirty)`** — extend the existing action to receive the composed answer + dirty
+  flag from `QuestionScreen`. Keep the existing 700ms-shimmer → reveal → 1200ms-hold timeline exactly.
+  *Only if `dirty`*, at the reveal `setState`, kick off `aiSwap('/api/plan', { answer: text, variation:
+  'default', ... })` for **this perspective** → store in `ai.plan[p]`. If untouched, do nothing → the
+  Anniversary card shows `anniversary.body`. The ~1.9s hold + screen-switch covers the call's latency.
+- **`regeneratePlan(perspective)`** — the "Make it cuter" action; repeatable (gate on `ai.planBusy[p]`,
+  not a one-shot `fired` guard): set busy → `aiSwap('/api/plan', { answer: <current plan or seed>,
+  variation:'cuter', ... })` → on non-null set `ai.plan[p]`, else keep current → clear busy. On `DemoApi`.
+- **`regenerateSpark(perspective)`** — the optional "✨ regenerate" action; same shape, gated on
+  `ai.sparkBusy[p]`, calls `/api/spark` and writes `ai.spark[p]` (= that side's nudge body). On `DemoApi`.
 - Use the existing tracked `schedule()`/`clearTimers()` so any timeout is cleared on `reset()`/`advance()`.
+- *(Ask Nami calls `/api/coach` from its own component — not via the provider.)*
 
 ### 5.3 Feature 2 — `SparkCard.tsx`
-One-line read change: `const body = state.ai.spark[perspective] ?? nudge.body`, render `{body}`.
-Everything else (accent, header, `language`, Done button, confetti) unchanged.
+- Read change: `const body = state.ai.spark[perspective] ?? nudge.body`, render `{body}`. Untouched →
+  seed nudge (presentation). Everything else (accent, header, `language`, Done button, confetti) unchanged.
+- **Interactive trigger:** add a small, secondary **"✨ regenerate"** affordance → `regenerateSpark(perspective)`,
+  disabled while `ai.sparkBusy[perspective]`, with the `.shimmer-sweep` overlay on the body during the call.
+  The scripted "Done" action is untouched; regenerate is opt-in (and can be hidden on the desktop stage —
+  see §8.5). *If you'd rather keep Spark a pure display beat, drop this control — decision §8.6.*
 
-### 5.4 Feature 1 — `AnniversaryPlanCard.tsx` (+ `StageView.tsx`)
+### 5.4 Feature 1 — `QuestionScreen.tsx` (editable answer) + `AnniversaryPlanCard.tsx` (+ `StageView.tsx`)
+**The editable answer (the interactive gate):**
+- In `QuestionScreen`, make the compose textarea genuinely editable: hold the value in local state seeded
+  from `question.answers[perspective].prefilled`; compute `dirty = value !== prefilled`. (Today it's
+  `readOnly`/`inputMode="none"` — keep that on the desktop stage if you adopt §8.5; enable it on mobile.)
+- The reveal of the **partner's** `hero` stays **verbatim and untouched** — editing only affects *your own*
+  composed answer and therefore the *plan generated from it*, never the emotional reveal text.
+- On send, call `sendQuestion(value, dirty)`. Untouched → seed plan, **no call**. Edited → plan generated
+  from the new words (fired during the reveal hold so it's ready at beat 5).
+
+**The card:**
 - Add a `perspective: Perspective` prop; pass it from `StageView` (which already has perspective). Read
-  `const body = state.ai.plan[perspective] ?? anniversary.body`.
-- Wrap the body paragraph in `relative overflow-hidden`; when `state.ai.planRegenerating[perspective]`,
-  render `<div className="shimmer-sweep absolute inset-0" />` over it.
+  `const body = state.ai.plan[perspective] ?? anniversary.body` (seed when nothing live).
+- Wrap the body paragraph in `relative overflow-hidden`; when `state.ai.planBusy[perspective]`, render
+  `<div className="shimmer-sweep absolute inset-0" />` over it.
 - Add a subtle **"✨ Make it cuter"** text button near the body (Maeda-restrained — small, secondary),
-  `onClick={() => regeneratePlan(perspective)}`, disabled while regenerating. The scripted action
-  ("Set reminder" → auto-advance) is untouched; the cuter button is an optional extra.
+  `onClick={() => regeneratePlan(perspective)}`, disabled while busy. The scripted action ("Set reminder"
+  → auto-advance) is untouched; both the edit-driven plan and "Make it cuter" are interactive extras.
 
 ### 5.5 Feature 3 — `src/components/nudge/AskNami.tsx` (new) + `App.tsx`
 - Mount `<AskNami/>` as a **sibling of `<Stage/>`** inside `DemoProvider` in `App.tsx` — so it lives on
@@ -296,10 +358,15 @@ required by the DoD regardless.
 - [ ] `ANTHROPIC_API_KEY` set on `fkc-hackathon` for Production + Preview + Development (`vercel env ls`).
 - [ ] `ai` + `@ai-sdk/anthropic` installed; `src/lib/llm.ts` + `src/lib/aiSwap.ts` added.
 - [ ] `/api/plan`, `/api/spark`, `/api/coach` deployed and returning real Claude output on a preview URL.
-- [ ] **Offline test passes:** kill the network (or block `/api`) → full scripted run still completes,
-      every beat shows its seed, zero dead-clicks, zero console errors. *(This is the non-negotiable gate.)*
-- [ ] "Make it cuter" produces a genuinely different plan each tap; Spark nudges visibly change if love
-      languages are swapped in `demoData.ts`; "Ask Nami" returns a specific tip to arbitrary input.
+- [ ] **Presentation mode = zero network:** tap the whole scripted run *without editing anything* and the
+      Network panel shows **0 requests to `/api`** — every beat is its seed, identical every run. *(The
+      non-negotiable stage gate; also means a dead venue wifi is irrelevant to the scripted run.)*
+- [ ] **Offline test passes:** with the network killed, the full scripted run still completes — zero
+      dead-clicks, zero console errors.
+- [ ] **Interactive mode hits real Claude:** editing the answer → the anniversary plan adapts to the new
+      words; "Make it cuter" → a genuinely different plan each tap; Spark "✨ regenerate" → new nudges
+      (and they diverge if love languages are swapped in `demoData.ts`); "Ask Nami" → a specific tip to
+      arbitrary input. Each still falls back to its seed on a forced timeout.
 - [ ] Demo spine, beat order (`today→spark→afterDark→question→anniversary→close`), Leo's **verbatim**
       answer, the 700ms shimmer / 1200ms reveal-hold, and "only the Pulse moves the score" all unchanged.
 - [ ] `npm run build` ✓ · `npm run lint` ✓ · mobile (full-bleed) and desktop (two framed phones) both fine.
@@ -317,11 +384,13 @@ required by the DoD regardless.
 **Edited**
 - `.gitignore` — add `.env*` / `!.env.example`
 - `package.json` — add `ai`, `@ai-sdk/anthropic` (via `npm install`)
-- `src/context/demo-types.ts` — add `AiState` + `ai` on `DemoState`
-- `src/context/DemoProvider.tsx` — `ai` in initial state; mount-prefetch Spark; reveal-prefetch Plans;
-  `regeneratePlan` action; extend `reset()`
-- `src/components/spark/SparkCard.tsx` — read `ai.spark[perspective] ?? nudge.body`
-- `src/components/anniversary/AnniversaryPlanCard.tsx` — `perspective` prop, live read, shimmer, cuter button
+- `src/context/demo-types.ts` — add `AiState` (+ `sparkBusy`/`planBusy`) + `ai` on `DemoState`
+- `src/context/DemoProvider.tsx` — `ai` in initial state; **no prefetch**; `sendQuestion(text, dirty)`
+  (gated plan call), `regeneratePlan`, `regenerateSpark` actions; extend `reset()` (clears `ai` + aborts)
+- `src/components/question/QuestionScreen.tsx` — editable textarea (local value + `dirty`), call
+  `sendQuestion(value, dirty)`; partner reveal stays verbatim. (Editing scoped per §8.5.)
+- `src/components/spark/SparkCard.tsx` — read `ai.spark[perspective] ?? nudge.body`; optional "✨ regenerate" (§8.6)
+- `src/components/anniversary/AnniversaryPlanCard.tsx` — `perspective` prop, live read, `planBusy` shimmer, "Make it cuter" button
 - `src/components/shell/StageView.tsx` — pass `perspective` to `AnniversaryPlanCard`
 - `src/App.tsx` — mount `<AskNami/>` inside `DemoProvider`
 - `src/data/demoData.ts` — add `coach.fallbackTip` (and optional Ask-Nami trigger copy)
@@ -330,19 +399,27 @@ required by the DoD regardless.
 
 ## 8. Open decisions (please confirm)
 
-1. **Editable Question answer?** The brief's "a judge edits the answer box → the plan adapts" needs an
-   editable answer, but the box is currently `readOnly` and the *revealed* text is the partner's
-   **verbatim** answer (must not change). **Recommendation:** ship Feature 1's adaptivity via **"Make it
-   cuter" (real regeneration)** — solid and safe. Treat "edit the answer to re-plan" as an optional
-   stretch (make the *viewer's own prefilled* answer editable), only if there's time. *Default: skip the
-   editable box.*
+1. **Plan source when the answer is edited** — the editable answer is now *in* (it's the interactive
+   gate). Question: when dirty, generate the plan from **the viewer's own edited words** (cleanest
+   one-phone loop: "write your moment → get a real micro-date") vs from the partner's revealed answer.
+   **Recommendation:** from the viewer's own edited text; the partner reveal stays a separate, verbatim
+   beat. *Default: viewer's own text.*
 2. **Coach trigger visibility** — always visible (subtle pill) vs only on the `close` screen.
    **Recommendation:** render the trigger only on `close`, so it never distracts during the scripted run
-   but is right there for Q&A.
+   but is right there for Q&A. *(Open-state is always local, never `currentScreen`.)*
 3. **Model** — default **Haiku 4.5** for latency; bump a specific endpoint to **Sonnet 4.6** only if its
    copy feels thin in rehearsal. *Default: Haiku everywhere.*
 4. **Local dev** — `vercel dev` as primary; if Vite 8 + `vercel dev` misbehave, develop against a Vercel
    **preview URL** (and point `fetch` at it). *Default: try `vercel dev` first.*
+5. **Scope editing to mobile? (§8.5)** — keep the answer box (and Spark regenerate) **non-editable on the
+   desktop framed stage** so the presenter physically cannot leave presentation mode, and enable them only
+   on the **mobile full-bleed** share-to-play build. **Recommendation:** yes — it makes the projector run
+   bullet-proof while the phone build is fully interactive. *Default: editing on mobile only.* (If you want
+   to demo "watch it adapt" live on the projector, set this to "editable everywhere" instead.)
+6. **Spark interactivity (§8.6)** — add the optional "✨ regenerate" control to Spark, or leave Spark a
+   pure seed display beat (interactivity then lives only in Feature 1's edit + "Make it cuter" + Ask Nami).
+   **Recommendation:** add it on mobile only (per §8.5); it's a cheap, on-brand "two manuals, live" moment.
+   *Default: include, mobile-only.*
 
 ---
 
