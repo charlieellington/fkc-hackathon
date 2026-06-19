@@ -37,7 +37,7 @@ export function QuestionScreen({ perspective }: { perspective: Perspective }) {
       </div>
 
       <p className="mt-5 text-xs font-medium text-ink-muted">{viewerName} (you)</p>
-      <div className="mt-1.5 flex items-start gap-2 rounded-[16px] bg-surface p-3 ring-1 ring-hairline">
+      <div className="mt-1.5 flex items-start gap-2 rounded-[12px] bg-surface p-3 ring-1 ring-hairline">
         <Avatar person={perspective} size="sm" />
         <textarea
           readOnly
@@ -54,7 +54,7 @@ export function QuestionScreen({ perspective }: { perspective: Perspective }) {
             onClick={sendQuestion}
             disabled={state.questionSending}
             data-demo-action="send"
-            className="raised press w-full rounded-full bg-ember py-3.5 text-lg font-semibold text-canvas disabled:opacity-70"
+            className="raised press w-full rounded-[12px] bg-ember py-3.5 text-lg font-semibold text-canvas disabled:opacity-70"
           >
             {state.questionSending ? 'Sending…' : 'Send'}
           </button>
@@ -63,7 +63,7 @@ export function QuestionScreen({ perspective }: { perspective: Perspective }) {
             <button
               onClick={advance}
               data-demo-action="use-this"
-              className="press flex w-full animate-fade-rise items-center justify-center gap-2 rounded-full bg-surface py-3.5 text-lg font-semibold text-ink ring-1 ring-hairline"
+              className="press flex w-full animate-fade-rise items-center justify-center gap-2 rounded-[12px] bg-surface py-3.5 text-lg font-semibold text-ink ring-1 ring-hairline"
             >
               <Sparkles className="size-5 text-rose" strokeWidth={2} /> {question.emberCta}
             </button>

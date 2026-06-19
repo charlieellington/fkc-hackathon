@@ -27,7 +27,7 @@ export function AfterDarkScreen() {
 
       <button
         onClick={tapAfterDark}
-        className="press mt-12 flex items-center gap-2 rounded-full bg-surface px-8 py-3 text-base font-semibold text-ink ring-1 ring-hairline"
+        className="press mt-12 flex items-center gap-2 rounded-[12px] bg-surface px-8 py-3 text-base font-semibold text-ink ring-1 ring-hairline"
       >
         <Lock className="size-4" strokeWidth={2} /> {afterDark.unlockCta}
       </button>

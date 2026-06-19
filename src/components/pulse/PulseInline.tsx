@@ -12,7 +12,7 @@ export function PulseInline() {
 
   if (state.pulseAnswered) {
     return (
-      <div className="flex items-center justify-center gap-2 rounded-[16px] bg-surface px-4 py-4 text-ink ring-1 ring-hairline">
+      <div className="flex items-center justify-center gap-2 rounded-[12px] bg-surface px-4 py-4 text-ink ring-1 ring-hairline">
         <Check className="size-5 text-ember" strokeWidth={2.5} />
         <span className="text-base font-semibold">{pulse.onAbsolutely.collapsedLabel}</span>
       </div>
@@ -21,12 +21,12 @@ export function PulseInline() {
 
   const [primary, ...rest] = pulse.options
   return (
-    <div className="rounded-[16px] bg-surface p-4 ring-1 ring-hairline">
+    <div className="rounded-[12px] bg-surface p-4 ring-1 ring-hairline">
       <p className="mb-3 text-center text-base font-semibold text-ink">{pulse.question}</p>
       <button
         onClick={answerPulse}
         data-demo-action="pulse"
-        className="raised press flex w-full items-center justify-center gap-2 rounded-full bg-ember py-3 text-lg font-semibold text-canvas"
+        className="raised press flex w-full items-center justify-center gap-2 rounded-[12px] bg-ember py-3 text-lg font-semibold text-canvas"
       >
         <Smile className="size-5" strokeWidth={2} /> {primary}
       </button>
