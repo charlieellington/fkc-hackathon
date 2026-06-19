@@ -15,6 +15,16 @@ export interface ScoreState {
   intimate: number
 }
 
+// Per-perspective live-AI overlay. null = "nothing live yet" → the screen renders its seed copy.
+// This is what makes presentation mode (no edits) make ZERO network calls while interactive mode
+// (edits / regenerate) swaps in real Claude text. `*Busy` drives the ≤800ms shimmer over the swap.
+export interface AiState {
+  spark: { maya: string | null; leo: string | null }
+  sparkBusy: { maya: boolean; leo: boolean }
+  plan: { maya: string | null; leo: string | null }
+  planBusy: { maya: boolean; leo: boolean }
+}
+
 export interface DemoState {
   currentScreen: Screen
   score: ScoreState
@@ -25,6 +35,7 @@ export interface DemoState {
   questionRevealed: boolean
   revealLocked: boolean
   reminderSet: boolean
+  ai: AiState
 }
 
 export const SCREEN_ORDER: Screen[] = ['today', 'spark', 'afterDark', 'question', 'anniversary', 'close']

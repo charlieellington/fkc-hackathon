@@ -105,6 +105,17 @@ export const anniversary = {
 
 export const closing = 'Tiny daily reps keep the spark from becoming an emergency.'
 
+// "Ask Nami" coach (Feature 3 — the interactive Nami+ tease). The real tip comes from Claude;
+// `fallbackTip` is the safe line shown if the call times out or errors, so it's never a dead box.
+export const coach = {
+  triggerLabel: 'Ask Nami',
+  placeholder: 'Tell Nami what’s on your mind…',
+  intro: 'A tiny, specific nudge — grounded in the two of you.',
+  fallbackTip:
+    'Start tonight: once Theo’s down, give Maya 20 phones-down minutes (her Quality Time), and ' +
+    'greet Leo with a proper hug tomorrow (his Physical Touch). Small, but it’s the rep that counts.',
+} as const
+
 // One short line per beat, shown only on the desktop projector stage (never on mobile) —
 // tells the audience what they're seeing / can do on each slide. Tiny, peripheral chrome.
 export const captions: Record<Screen, string> = {

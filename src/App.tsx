@@ -3,12 +3,15 @@
 // full-bleed app on mobile. Toaster is Nami's warm little voice.
 import { DemoProvider } from '@/context/DemoProvider'
 import { Stage } from '@/components/shell/Stage'
+import { AskNami } from '@/components/coach/AskNami'
 import { Toaster } from '@/components/ui/sonner'
 
 function App() {
   return (
     <DemoProvider>
       <Stage />
+      {/* Feature 3 — interactive coach, mobile + Q&A only; never enters the scripted beat order. */}
+      <AskNami />
       <Toaster />
     </DemoProvider>
   )

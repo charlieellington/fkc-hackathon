@@ -10,7 +10,13 @@ import { QuestionScreen } from '@/components/question/QuestionScreen'
 import { AnniversaryPlanCard } from '@/components/anniversary/AnniversaryPlanCard'
 import { CloseScreen } from '@/screens/CloseScreen'
 
-export function StageView({ perspective }: { perspective: Perspective }) {
+export function StageView({
+  perspective,
+  interactive = false,
+}: {
+  perspective: Perspective
+  interactive?: boolean
+}) {
   const { state } = useDemo()
 
   let screen
@@ -19,16 +25,16 @@ export function StageView({ perspective }: { perspective: Perspective }) {
       screen = <TodayScreen />
       break
     case 'spark':
-      screen = <SparkCard perspective={perspective} />
+      screen = <SparkCard perspective={perspective} interactive={interactive} />
       break
     case 'afterDark':
       screen = <AfterDarkScreen />
       break
     case 'question':
-      screen = <QuestionScreen perspective={perspective} />
+      screen = <QuestionScreen perspective={perspective} interactive={interactive} />
       break
     case 'anniversary':
-      screen = <AnniversaryPlanCard />
+      screen = <AnniversaryPlanCard perspective={perspective} interactive={interactive} />
       break
     case 'close':
       screen = <CloseScreen />
