@@ -1,23 +1,16 @@
-// Root of the Nami single-page app.
-// Sets up client-side routing (react-router) and the mobile-first "phone column"
-// shell that every screen renders inside — full-bleed on a phone, centred in a
-// warm frame on desktop. Front-end only: no backend, no APIs.
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Home from '@/pages/Home'
+// Root of the Nami demo. No routing, no backend — a single in-memory flow. The DemoProvider
+// holds the shared relationship timeline; Stage renders it as two phones on desktop or one
+// full-bleed app on mobile. Toaster is Nami's warm little voice.
+import { DemoProvider } from '@/context/DemoProvider'
+import { Stage } from '@/components/shell/Stage'
+import { Toaster } from '@/components/ui/sonner'
 
 function App() {
   return (
-    <BrowserRouter>
-      {/* Warm page backdrop — only visible around the column on larger screens. */}
-      <div className="min-h-svh bg-gradient-to-b from-amber-50 via-rose-50 to-orange-100">
-        {/* The phone column: roughly a large phone's width, centred. */}
-        <div className="mx-auto flex min-h-svh w-full max-w-md flex-col bg-background shadow-sm">
-          <Routes>
-            <Route path="/" element={<Home />} />
-          </Routes>
-        </div>
-      </div>
-    </BrowserRouter>
+    <DemoProvider>
+      <Stage />
+      <Toaster />
+    </DemoProvider>
   )
 }
 
