@@ -2,12 +2,22 @@
 // anniversary plan ("recreate Sunday coffee"). One card, one honest action: Set reminder → a local
 // toast (no real booking). The "that's clever" beat.
 import { useDemo } from '@/context/DemoProvider'
+import type { Perspective } from '@/context/demo-types'
 import { cn } from '@/lib/utils'
 import { anniversary } from '@/data/demoData'
-import { Coffee, Check } from 'lucide-react'
+import { Coffee, Check, Sparkles } from 'lucide-react'
 
-export function AnniversaryPlanCard() {
-  const { state, setReminder } = useDemo()
+export function AnniversaryPlanCard({
+  perspective = 'maya',
+  interactive = false,
+}: {
+  perspective?: Perspective
+  interactive?: boolean
+}) {
+  const { state, setReminder, regeneratePlan } = useDemo()
+  // Live plan if the answer was edited / "Make it cuter" was tapped, else the seed (presentation).
+  const body = state.ai.plan[perspective] ?? anniversary.body
+  const busy = state.ai.planBusy[perspective]
 
   return (
     <div className="flex h-full flex-col bg-canvas px-6 pb-6 pt-14 text-ink">
@@ -17,7 +27,20 @@ export function AnniversaryPlanCard() {
           <p className="flex items-center gap-2 text-base font-bold text-ember">
             <Coffee className="size-5" strokeWidth={2} /> {anniversary.cardTitle}
           </p>
-          <p className="mt-4 font-display text-[24px] font-semibold leading-snug text-ink">{anniversary.body}</p>
+          <div className="relative overflow-hidden">
+            <p className="mt-4 font-display text-[24px] font-semibold leading-snug text-ink">{body}</p>
+            {busy && <div className="shimmer-sweep absolute inset-0" />}
+          </div>
+          {interactive && (
+            <button
+              onClick={() => regeneratePlan(perspective, body)}
+              disabled={busy}
+              data-demo-action="make-cuter"
+              className="press mt-4 flex items-center gap-1.5 text-sm font-medium text-ember disabled:opacity-50"
+            >
+              <Sparkles className="size-4" strokeWidth={2} /> {busy ? 'thinking…' : 'Make it cuter'}
+            </button>
+          )}
         </div>
         <button
           onClick={setReminder}

@@ -15,18 +15,22 @@ export function Phone({
   primary = false,
   recede = false,
   showBigAvatar = false,
+  interactive = false,
 }: {
   perspective: Perspective
   framed?: boolean
   primary?: boolean
   recede?: boolean
   showBigAvatar?: boolean
+  // When true (the mobile share-to-play build only), screens enable real-AI editing/regenerate.
+  // The desktop projector stage leaves this false, so it stays the flawless scripted presentation.
+  interactive?: boolean
 }) {
   if (!framed) {
     return (
       <div className="h-svh w-full" data-perspective={perspective}>
         <DeviceFrame framed={false}>
-          <StageView perspective={perspective} />
+          <StageView perspective={perspective} interactive={interactive} />
         </DeviceFrame>
       </div>
     )
@@ -59,7 +63,7 @@ export function Phone({
         />
         <div className="relative z-10">
           <DeviceFrame framed>
-            <StageView perspective={perspective} />
+            <StageView perspective={perspective} interactive={interactive} />
           </DeviceFrame>
         </div>
       </div>

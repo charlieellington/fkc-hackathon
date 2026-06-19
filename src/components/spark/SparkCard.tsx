@@ -6,13 +6,22 @@ import type { Perspective } from '@/context/demo-types'
 import { cn } from '@/lib/utils'
 import { spark } from '@/data/demoData'
 import { Confetti } from '@/components/fx/Confetti'
-import { Check } from 'lucide-react'
+import { Check, Sparkles } from 'lucide-react'
 
-export function SparkCard({ perspective }: { perspective: Perspective }) {
-  const { state, completeSpark } = useDemo()
+export function SparkCard({
+  perspective,
+  interactive = false,
+}: {
+  perspective: Perspective
+  interactive?: boolean
+}) {
+  const { state, completeSpark, regenerateSpark } = useDemo()
   const nudge = spark[perspective]
   const receiver = perspective === 'maya' ? 'Leo' : 'Maya'
   const accent = nudge.accent === 'amber' ? 'var(--color-amber)' : 'var(--color-teal)'
+  // Live nudge if regenerated, else the seed (presentation). Busy = the ≤800ms shimmer over the swap.
+  const body = state.ai.spark[perspective] ?? nudge.body
+  const busy = state.ai.sparkBusy[perspective]
 
   return (
     <div className="relative flex h-full flex-col bg-canvas px-6 pb-6 pt-14 text-ink">
@@ -25,11 +34,25 @@ export function SparkCard({ perspective }: { perspective: Perspective }) {
           <p className="text-base font-bold" style={{ color: accent }}>
             {nudge.header}
           </p>
-          <p className="mt-4 font-display text-[26px] font-semibold leading-snug text-ink">{nudge.body}</p>
+          <div className="relative overflow-hidden">
+            <p className="mt-4 font-display text-[26px] font-semibold leading-snug text-ink">{body}</p>
+            {busy && <div className="shimmer-sweep absolute inset-0" />}
+          </div>
           <p className="mt-4 text-sm text-ink-muted">
             {receiver} feels loved through <span style={{ color: accent }}>{nudge.language}</span>.
           </p>
         </div>
+        {interactive && (
+          <button
+            onClick={() => regenerateSpark(perspective)}
+            disabled={busy}
+            data-demo-action="spark-regenerate"
+            className="press mt-3 flex items-center gap-1.5 text-sm font-medium text-ink-muted disabled:opacity-50"
+          >
+            <Sparkles className="size-4" strokeWidth={2} style={{ color: accent }} />
+            {busy ? 'thinking…' : 'regenerate'}
+          </button>
+        )}
         <button
           onClick={completeSpark}
           disabled={state.sparkDone}

@@ -84,9 +84,10 @@ export function Stage() {
         </div>
       </div>
 
-      {/* MOBILE — just the app, full-bleed: instantly shareable + playable */}
+      {/* MOBILE — just the app, full-bleed: instantly shareable + playable. `interactive` turns on the
+          real-AI editing/regenerate paths here only; the desktop stage above stays scripted/seed. */}
       <div className="relative md:hidden">
-        <Phone perspective={mobilePerspective} framed={false} />
+        <Phone perspective={mobilePerspective} framed={false} interactive />
         <MobilePerspectiveToggle value={mobilePerspective} onChange={setMobilePerspective} />
       </div>
     </>

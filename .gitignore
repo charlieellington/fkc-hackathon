@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Local env (never commit — contains secrets; this repo is public)
+.env*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
