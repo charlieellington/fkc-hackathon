@@ -27,15 +27,21 @@ export function AskNami() {
     if (!message.trim() || loading) return
     setLoading(true)
     setTip(null)
-    const res = await aiSwap<{ tip: string | null }>('/api/coach', {
-      message,
-      couple: {
-        names: `${couple.maya.name} & ${couple.leo.name}`,
-        loves: { maya: couple.maya.language, leo: couple.leo.language },
-        score: score.loveScore,
-        gaps: 'intimacy drifting at 71, ~5 weeks since a date',
+    const res = await aiSwap<{ tip: string | null }>(
+      '/api/coach',
+      {
+        message,
+        couple: {
+          names: `${couple.maya.name} & ${couple.leo.name}`,
+          loves: { maya: couple.maya.language, leo: couple.leo.language },
+          score: score.loveScore,
+          gaps: 'intimacy drifting at 71, ~5 weeks since a date',
+        },
       },
-    })
+      // Ask Nami is an interactive Q&A surface (NOT a timed stage beat), so let the call breathe a bit
+      // longer than the demo's stage-safety default — coach tips run ~3s and were timing out at 2.5s.
+      5000,
+    )
     setTip(res?.tip ?? coach.fallbackTip) // never a dead box
     setLoading(false)
   }

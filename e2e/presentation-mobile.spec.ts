@@ -4,9 +4,8 @@ import { test, expect } from '@playwright/test'
 import { phone } from './helpers'
 
 test.describe('mobile build', () => {
-  test.skip(({}, testInfo) => testInfo.project.name !== 'mobile', 'mobile build only')
-
-  test('perspective toggle + Pulse', async ({ page }) => {
+  test('perspective toggle + Pulse', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'mobile', 'mobile build only')
     await page.goto('/')
     await expect(phone(page, 'maya')).toBeVisible() // defaults to Maya
 
