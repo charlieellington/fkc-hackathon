@@ -1,6 +1,6 @@
-// Human-first note: emotion → action. Nami turns the moment they BOTH just named into a tiny
-// anniversary plan ("recreate Sunday coffee"). One card, one honest action: Set reminder → a local
-// toast (no real booking). The "that's clever" beat.
+// Human-first note: emotion → action. Nami turns the two answers into one tiny anniversary plan —
+// the kitesurf–coffee treaty (Leo's dawn surf, then home for Maya's coffee). One card, one honest
+// action: Set reminder → a local toast (no real booking). The "that's clever" beat.
 import { useDemo } from '@/context/DemoProvider'
 import type { Perspective } from '@/context/demo-types'
 import { cn } from '@/lib/utils'
