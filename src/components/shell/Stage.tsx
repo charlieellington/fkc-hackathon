@@ -10,6 +10,7 @@ import type { Perspective } from '@/context/demo-types'
 import { Phone } from './Phone'
 import { Wordmark } from './Wordmark'
 import { IntroOverlay } from './IntroOverlay'
+import { OutroOverlay } from './OutroOverlay'
 import { Avatar } from '@/components/ui/Avatar'
 import { captions } from '@/data/demoData'
 
@@ -74,19 +75,34 @@ export function Stage() {
   const photosShown = introPhase !== 'flame'
   const phonesShown = introPhase === 'live'
 
+  // Closing handoff: tapping the final Close screen reveals the "Try it on mobile" QR slide.
+  // Reset it whenever we leave Close (e.g. R / long-press wordmark) so the demo loops cleanly.
+  const [outroShown, setOutroShown] = useState(false)
+  useEffect(() => {
+    if (state.currentScreen !== 'close') setOutroShown(false)
+  }, [state.currentScreen])
+
   // Question "Focus Mode": during the reveal hold, Maya is the focal point and Leo recedes.
   const focus = state.currentScreen === 'question' && state.revealLocked
 
   return (
     <>
       {/* DESKTOP / PROJECTOR — the two-phone candlelit stage */}
-      <div className="relative hidden min-h-svh w-full flex-col items-center justify-center gap-5 overflow-hidden bg-room px-6 py-6 md:flex">
+      <div
+        className="relative hidden min-h-svh w-full flex-col items-center justify-center gap-5 overflow-hidden bg-room px-6 py-6 md:flex"
+        onClick={() => {
+          if (state.currentScreen === 'close' && phonesShown && !outroShown) setOutroShown(true)
+        }}
+      >
         {/* Warm candlelight from above + a soft vignette so the phones read as glowing windows. */}
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_85%_at_50%_30%,rgba(255,122,60,0.12),transparent_62%)]" />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(140%_120%_at_50%_50%,transparent_52%,rgba(0,0,0,0.55))]" />
 
         {/* Opening curtain: a big Flame to click. Crossfades out as the photos bloom in. */}
         <IntroOverlay active={introPhase === 'flame'} onBegin={beginIntro} />
+
+        {/* Closing curtain: the "Try it on mobile" QR slide. Crossfades in over the phones. */}
+        <OutroOverlay active={outroShown} />
 
         <Wordmark
           className={cn('relative transition-opacity duration-700', photosShown ? 'opacity-100' : 'opacity-0')}
@@ -124,7 +140,11 @@ export function Stage() {
           >
             {captions[state.currentScreen]}
           </p>
-          <p className="text-sm font-medium text-ink/35">Tap a phone · → to advance · R to reset</p>
+          <p className="text-sm font-medium text-ink/35">
+            {state.currentScreen === 'close' && !outroShown
+              ? 'Tap anywhere to share Nami'
+              : 'Tap a phone · → to advance · R to reset'}
+          </p>
         </div>
       </div>
 
