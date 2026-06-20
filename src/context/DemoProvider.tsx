@@ -23,27 +23,36 @@ import {
   QUESTION_REVEAL_HOLD_MS,
 } from './demo-types'
 
-const initialState: DemoState = {
-  currentScreen: 'today',
-  score: {
-    loveScore: seedScore.loveScore,
-    trendThisWeek: seedScore.trendThisWeek,
-    emotional: seedScore.emotional,
-    intimate: seedScore.intimate,
-  },
-  flameStage: 'open',
-  pulseAnswered: false,
-  sparkDone: false,
-  questionSending: false,
-  questionRevealed: false,
-  revealLocked: false,
-  reminderSet: false,
-  ai: {
-    spark: { maya: null, leo: null },
-    sparkBusy: { maya: false, leo: false },
-    plan: { maya: null, leo: null },
-    planBusy: { maya: false, leo: false },
-  },
+// The phone build (below the md breakpoint — the shareable "play with the AI" surface) opens straight
+// on the closing frame: flame at full, the 84 signal, Ask Nami. It never runs the scripted beats. The
+// desktop/projector stage keeps the full today→close run. Mirrors the `md:` Tailwind split in Stage.tsx.
+const startOnClose =
+  typeof window !== 'undefined' && !window.matchMedia('(min-width: 768px)').matches
+
+function createInitialState(): DemoState {
+  const sc = startOnClose ? seedScore.afterPulse : seedScore
+  return {
+    currentScreen: startOnClose ? 'close' : 'today',
+    score: {
+      loveScore: sc.loveScore,
+      trendThisWeek: sc.trendThisWeek,
+      emotional: sc.emotional,
+      intimate: sc.intimate,
+    },
+    flameStage: startOnClose ? 'final' : 'open',
+    pulseAnswered: startOnClose,
+    sparkDone: false,
+    questionSending: false,
+    questionRevealed: false,
+    revealLocked: false,
+    reminderSet: false,
+    ai: {
+      spark: { maya: null, leo: null },
+      sparkBusy: { maya: false, leo: false },
+      plan: { maya: null, leo: null },
+      planBusy: { maya: false, leo: false },
+    },
+  }
 }
 
 function applyGoTo(s: DemoState, to: Screen): DemoState {
@@ -71,7 +80,7 @@ interface DemoApi {
 const DemoContext = createContext<DemoApi | null>(null)
 
 export function DemoProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<DemoState>(initialState)
+  const [state, setState] = useState<DemoState>(createInitialState)
   // Touched only in handlers/timers (never during render) so `advance` can guard the reveal hold.
   const revealLockedRef = useRef(false)
   const timers = useRef<number[]>([])
@@ -253,7 +262,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     gen.current += 1 // discard any in-flight AI results so a replay starts on clean seeds
     busy.current = { plan: { maya: false, leo: false }, spark: { maya: false, leo: false } }
     planSource.current = { maya: null, leo: null }
-    setState(initialState)
+    setState(createInitialState())
   }, [clearTimers])
 
   const roles = useCallback(
