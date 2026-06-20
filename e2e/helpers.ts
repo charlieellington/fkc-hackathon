@@ -9,7 +9,7 @@ export const HERO = {
   leo: 'I felt like us again', // Leo's hero → revealed on Maya's phone
   maya: 'your hand in mine', //   Maya's hero → revealed on Leo's phone
 }
-export const SEED_ANNIVERSARY = 'Recreate Sunday coffee' // the seed plan (used when offline / not edited)
+export const SEED_ANNIVERSARY = 'dawn kitesurf' // the seed plan (used when offline / not edited)
 
 // The visible phone for a perspective — works on desktop (two phones) and mobile (one phone).
 export function phone(page: Page, perspective: 'maya' | 'leo' = 'maya'): Locator {

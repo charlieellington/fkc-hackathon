@@ -75,21 +75,21 @@ export const afterDark = {
   toast: 'Nami+ unlocks the spicy tier — after bedtime.',
 } as const
 
-// The Question — the emotional peak. Each person has a short prefilled answer and a full
-// "hero" answer that the partner unlocks. Both land on the same Sunday morning.
-// Leo's hero is VERBATIM from the brief — do not edit.
+// The Question — the emotional peak, played for laughs. Same prompt, opposite answers: Maya feels
+// closest when Leo STAYS HOME (skips the perfect wind); Leo feels closest mid-kitesurf, then home
+// buzzing. Each `hero` is revealed on the PARTNER's phone — the gap between the two is the joke.
 export const question = {
   prompt: 'When did you feel closest to me this week?',
   emberCta: 'Use this for Tuesday?',
   answers: {
     maya: {
-      prefilled: 'Sunday coffee before Theo woke.',
-      hero: 'Sunday before Theo woke — coffee going cold, your hand in mine. No phones. Just us.',
+      prefilled: 'When you didn’t go kitesurfing.',
+      hero: 'Sunday — wind was perfect and you stayed in anyway. Coffee going cold, your hand in mine, Theo still asleep. No phones. Just us.',
       answeredAt: '8:09am',
     },
     leo: {
-      prefilled: 'Coffee before Theo woke.',
-      hero: 'Sunday morning — coffee, both of us, Theo still asleep. No phones. I felt like us again.',
+      prefilled: 'When I had an amazing kitesurfing session.',
+      hero: 'Out past the break, wind howling, fully dialled — best session in months. Came home buzzing, scooped up Theo, kissed you. I felt like us again.',
       answeredAt: '8:12am',
     },
   },
@@ -98,8 +98,8 @@ export const question = {
 // Anniversary — reuses the just-revealed answer. One card, one action.
 export const anniversary = {
   title: 'Tuesday · your anniversary',
-  cardTitle: 'Sunday coffee micro-date',
-  body: 'Recreate Sunday coffee: phones away, 20 min after Theo sleeps.',
+  cardTitle: 'The kitesurf–coffee treaty',
+  body: 'Saturday: Leo gets his dawn kitesurf — then home, salt still in his hair, for slow coffee with Maya before Theo’s up. Wind for him, us for her.',
   setReminderToast: 'Reminder set in Nami',
 } as const
 
