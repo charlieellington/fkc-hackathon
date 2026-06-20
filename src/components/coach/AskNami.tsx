@@ -84,6 +84,7 @@ export function AskNami() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={coach.placeholder}
+              maxLength={400}
               aria-label="Your message to Nami"
               className="mt-4 h-24 w-full resize-none rounded-[12px] bg-surface p-3 text-[15px] text-ink ring-1 ring-hairline focus:outline-none focus:ring-2 focus:ring-ember/40"
             />

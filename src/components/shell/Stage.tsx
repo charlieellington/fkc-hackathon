@@ -2,15 +2,20 @@
 // (Maya left, Leo right) for the projector demo. On a real phone it instead shows ONLY the app,
 // full-bleed (the shareable build), with a tiny Maya/Leo toggle. The two fixed 390×844 phones are
 // scaled as one unit to fit any projector without page scroll.
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useDemo } from '@/context/DemoProvider'
 import { useKeyboardNav } from '@/hooks/useKeyboardNav'
 import type { Perspective } from '@/context/demo-types'
 import { Phone } from './Phone'
 import { Wordmark } from './Wordmark'
+import { IntroOverlay } from './IntroOverlay'
 import { Avatar } from '@/components/ui/Avatar'
 import { captions } from '@/data/demoData'
+
+// Desktop-only opening sequence: a big Flame gate → photos bloom in → phones drop in 3s later.
+type IntroPhase = 'flame' | 'photos' | 'live'
+const INTRO_PHONES_DELAY_MS = 3000
 
 function useStageScale() {
   const [scale, setScale] = useState(1)
@@ -55,6 +60,20 @@ export function Stage() {
   const scale = useStageScale()
   const [mobilePerspective, setMobilePerspective] = useState<Perspective>('maya')
 
+  // Desktop intro sequence (mobile build never touches this — see md:hidden branch below).
+  const [introPhase, setIntroPhase] = useState<IntroPhase>('flame')
+  const introTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(introTimer.current), [])
+  const beginIntro = useCallback(() => {
+    setIntroPhase((p) => {
+      if (p !== 'flame') return p // guard against double-fire
+      introTimer.current = window.setTimeout(() => setIntroPhase('live'), INTRO_PHONES_DELAY_MS)
+      return 'photos'
+    })
+  }, [])
+  const photosShown = introPhase !== 'flame'
+  const phonesShown = introPhase === 'live'
+
   // Question "Focus Mode": during the reveal hold, Maya is the focal point and Leo recedes.
   const focus = state.currentScreen === 'question' && state.revealLocked
 
@@ -65,15 +84,40 @@ export function Stage() {
         {/* Warm candlelight from above + a soft vignette so the phones read as glowing windows. */}
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_85%_at_50%_30%,rgba(255,122,60,0.12),transparent_62%)]" />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(140%_120%_at_50%_50%,transparent_52%,rgba(0,0,0,0.55))]" />
-        <Wordmark className="relative" />
+
+        {/* Opening curtain: a big Flame to click. Crossfades out as the photos bloom in. */}
+        <IntroOverlay active={introPhase === 'flame'} onBegin={beginIntro} />
+
+        <Wordmark
+          className={cn('relative transition-opacity duration-700', photosShown ? 'opacity-100' : 'opacity-0')}
+        />
         <div
           className="relative flex items-start justify-center gap-10"
           style={{ transform: `scale(${scale})`, transformOrigin: 'top center' }}
         >
-          <Phone perspective="maya" framed primary={focus} showBigAvatar={state.currentScreen === 'today'} />
-          <Phone perspective="leo" framed recede={focus} showBigAvatar={state.currentScreen === 'today'} />
+          <Phone
+            perspective="maya"
+            framed
+            primary={focus}
+            showBigAvatar={state.currentScreen === 'today' && photosShown}
+            frameHidden={!phonesShown}
+            interactive
+          />
+          <Phone
+            perspective="leo"
+            framed
+            recede={focus}
+            showBigAvatar={state.currentScreen === 'today' && photosShown}
+            frameHidden={!phonesShown}
+            interactive
+          />
         </div>
-        <div className="relative flex flex-col items-center gap-1">
+        <div
+          className={cn(
+            'relative flex flex-col items-center gap-1 transition-opacity duration-700',
+            photosShown ? 'opacity-100' : 'opacity-0',
+          )}
+        >
           <p
             key={state.currentScreen}
             className="animate-fade-rise font-display text-[15px] italic text-ink-muted"
