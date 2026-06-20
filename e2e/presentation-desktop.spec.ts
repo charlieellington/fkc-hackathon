@@ -4,9 +4,8 @@ import { test, expect } from '@playwright/test'
 import { phone, stepOf, begin, HERO } from './helpers'
 
 test.describe('desktop presentation', () => {
-  test.skip(({}, testInfo) => testInfo.project.name !== 'desktop', 'desktop stage only')
-
-  test('runs the scripted flow end to end', async ({ page }) => {
+  test('runs the scripted flow end to end', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'desktop stage only')
     await page.goto('/')
     await begin(page)
     const maya = phone(page, 'maya')
