@@ -27,3 +27,8 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Playwright
+.playwright-mcp/
+test-results/
+playwright-report/
